@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import AntDesign from "@expo/vector-icons/AntDesign";
 
 class Cell {
   row: number;
@@ -114,6 +115,14 @@ const Maze: React.FC<MazeProps> = ({ cols, rows, onWin }) => {
   const [maze, setMaze] = useState<Cell[][]>([]);
   const [playerPosition, setPlayerPosition] = useState({ row: 0, col: 0 });
   const [mazeSolved, setMazeSolved] = useState(false);
+  const [isMazeVisible, setIsMazeVisible] = useState(true);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setIsMazeVisible((prev) => !prev);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     setMaze(generateMaze(rows, cols));
@@ -157,6 +166,7 @@ const Maze: React.FC<MazeProps> = ({ cols, rows, onWin }) => {
                     borderRightWidth: cell.walls.right ? 2 : 0,
                     borderBottomWidth: cell.walls.bottom ? 2 : 0,
                     borderLeftWidth: cell.walls.left ? 2 : 0,
+                    borderColor: isMazeVisible ? "black" : "transparent",
                     backgroundColor:
                       rowIndex === playerPosition.row &&
                       colIndex === playerPosition.col
@@ -181,27 +191,27 @@ const Maze: React.FC<MazeProps> = ({ cols, rows, onWin }) => {
             style={styles.button}
             onPress={() => movePlayer(-1, 0)}
           >
-            <Text style={styles.buttonText}>Up</Text>
+            <AntDesign name="caretup" size={40} color="blue" />
           </TouchableOpacity>
           <View style={styles.row}>
             <TouchableOpacity
               style={styles.button}
               onPress={() => movePlayer(0, -1)}
             >
-              <Text style={styles.buttonText}>Left</Text>
+              <AntDesign name="caretleft" size={40} color="blue" />
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.button}
               onPress={() => movePlayer(0, 1)}
             >
-              <Text style={styles.buttonText}>Right</Text>
+              <AntDesign name="caretright" size={40} color="blue" />
             </TouchableOpacity>
           </View>
           <TouchableOpacity
             style={styles.button}
             onPress={() => movePlayer(1, 0)}
           >
-            <Text style={styles.buttonText}>Down</Text>
+            <AntDesign name="caretdown" size={40} color="blue" />
           </TouchableOpacity>
         </View>
       )}
@@ -235,8 +245,9 @@ const styles = StyleSheet.create({
   button: {
     backgroundColor: "#007BFF",
     padding: 10,
-    borderRadius: 5,
+    borderRadius: 15,
     margin: 5,
+    marginHorizontal: 30,
   },
   buttonText: {
     color: "white",

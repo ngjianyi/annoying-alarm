@@ -10,7 +10,7 @@ const App: React.FC = () => {
   const [alarmTime, setAlarmTime] = useState<string>("10");
   const loadAlarmSound = async (): Promise<void> => {
     const { sound } = await Audio.Sound.createAsync(
-      require("../assets/audio/alarm.mp3")
+      require("../../assets/audio/alarm.mp3")
     );
     setSound(sound);
   };
@@ -25,7 +25,7 @@ const App: React.FC = () => {
 
     setAlarmSet(true);
     setTimeout(() => {
-      loadAlarmSound();
+      // loadAlarmSound();
       sound?.playAsync();
       setMazeVisible(true);
     }, delay * 1000);
