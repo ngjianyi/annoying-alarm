@@ -2,15 +2,17 @@ import React, { useState } from "react";
 import { View, Text, Button, TextInput, StyleSheet, Alert } from "react-native";
 import { Audio } from "expo-av";
 import Maze from "@/components/Maze";
+import ReactorTask from "@/components/Reactor"; // Import the ReactorTask
 
 const App: React.FC = () => {
   const [alarmSet, setAlarmSet] = useState<boolean>(false);
-  const [isMazeVisible, setMazeVisible] = useState<boolean>(false);
+  const [task, setTask] = useState<"maze" | "reactor" | null>(null); // State to determine the task
   const [sound, setSound] = useState<Audio.Sound | null>(null);
   const [alarmTime, setAlarmTime] = useState<string>("10");
+
   const loadAlarmSound = async (): Promise<void> => {
     const { sound } = await Audio.Sound.createAsync(
-      require("../../assets/audio/alarm.mp3")
+      require("../../assets/audio/alarm.mp3") 
     );
     setSound(sound);
   };
@@ -25,29 +27,39 @@ const App: React.FC = () => {
 
     setAlarmSet(true);
     setTimeout(() => {
-      // loadAlarmSound();
+      loadAlarmSound();
       sound?.playAsync();
-      setMazeVisible(true);
+      const selectedTask = Math.random() < 0.5 ? "maze" : "reactor";
+      setTask(selectedTask);
     }, delay * 1000);
   };
 
   const stopAlarm = (): void => {
     sound?.stopAsync();
-    setMazeVisible(false);
+    setTask(null);
     setAlarmSet(false);
-    Alert.alert("Great Job!", "You solved the maze and turned off the alarm.");
+    Alert.alert("Great Job!", "You completed the task and turned off the alarm.");
   };
 
   return (
     <View style={styles.container}>
-      {isMazeVisible ? (
+      {task === "maze" && (
         <View>
           <Text style={styles.alarmText}>
             Solve the maze to stop the alarm!
           </Text>
           <Maze cols={10} rows={10} onWin={stopAlarm} />
         </View>
-      ) : (
+      )}
+      {task === "reactor" && (
+        <View>
+          <Text style={styles.alarmText}>
+            Complete the memory game to stop the alarm!
+          </Text>
+          <ReactorTask onWin={stopAlarm} />
+        </View>
+      )}
+      {!task && (
         <View>
           <TextInput
             style={styles.input}
