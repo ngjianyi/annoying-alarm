@@ -3,15 +3,15 @@ import { View, Text, Button, StyleSheet, Alert, Platform } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Audio } from "expo-av";
 import Maze from "@/components/Maze";
-import ReactorTask from "@/components/Reactor"; // Import the ReactorTask
+import ReactorTask from "@/components/Reactor";
+import Sudoku from "@/components/Sudoku";
 
 const App: React.FC = () => {
   const [alarmSet, setAlarmSet] = useState<boolean>(false);
-  const [isMazeVisible, setMazeVisible] = useState<boolean>(false);
   const [sound, setSound] = useState<Audio.Sound | null>(null);
   const [selectedTime, setSelectedTime] = useState<Date>(new Date());
-  const [showPicker, setShowPicker] = useState<boolean>(true); // Picker is shown initially
-  const [task, setTask] = useState<"maze" | "reactor" | null>(null); // State to determine the task
+  const [showPicker, setShowPicker] = useState<boolean>(true);
+  const [task, setTask] = useState<"maze" | "reactor" | "sudoku" | null>(null);
 
   useEffect(() => {
     const loadAlarmSound = async (): Promise<void> => {
@@ -34,7 +34,12 @@ const App: React.FC = () => {
     let interval: number;
 
     if (alarmSet) {
-      interval = (setInterval as unknown as (handler: () => void, timeout: number) => number)(() => {
+      interval = (
+        setInterval as unknown as (
+          handler: () => void,
+          timeout: number
+        ) => number
+      )(() => {
         const currentTime = new Date();
         if (
           currentTime.getHours() === selectedTime.getHours() &&
@@ -43,9 +48,14 @@ const App: React.FC = () => {
           if (sound) {
             sound.playAsync();
           }
-          const selectedTask = Math.random() < 0.5 ? "maze" : "reactor";
-          setTask(selectedTask);
-          setAlarmSet(false); // Reset alarm after playing sound
+          const tasks: ("maze" | "reactor" | "sudoku")[] = [
+            "maze",
+            "reactor",
+            "sudoku",
+          ];
+          const randomTaskIndex = Math.floor(Math.random() * tasks.length);
+          setTask(tasks[randomTaskIndex]);
+          setAlarmSet(false);
           clearInterval(interval);
         }
       }, 1000);
@@ -58,7 +68,7 @@ const App: React.FC = () => {
 
   const scheduleAlarm = (): void => {
     setAlarmSet(true);
-    setShowPicker(false);  // Hide the picker after the alarm is set
+    setShowPicker(false);
     Alert.alert(
       "Alarm Set",
       `The alarm is set for ${selectedTime.toLocaleTimeString([], {
@@ -71,8 +81,11 @@ const App: React.FC = () => {
   const stopAlarm = (): void => {
     sound?.stopAsync();
     setTask(null);
-    setMazeVisible(false);
-    Alert.alert("Great Job!", "You completed the task and turned off the alarm.");
+    Alert.alert(
+      "Great Job!",
+      "You completed the task and turned off the alarm."
+    );
+    setShowPicker(true);
   };
 
   const handleTimeChange = (event: any, selectedDate?: Date) => {
@@ -97,6 +110,14 @@ const App: React.FC = () => {
             Complete the memory game to stop the alarm!
           </Text>
           <ReactorTask onWin={stopAlarm} />
+        </View>
+      )}
+      {task === "sudoku" && (
+        <View>
+          <Text style={styles.alarmText}>
+            Complete the memory game to stop the alarm!
+          </Text>
+          <Sudoku onWin={stopAlarm} />
         </View>
       )}
       {!task && (
@@ -134,26 +155,26 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#fff", // Light background
+    backgroundColor: "#fff",
   },
   innerContainer: {
     justifyContent: "center",
-    alignItems: "center", // Center everything horizontally
-    width: "100%", // Ensure the container takes full width
+    alignItems: "center",
+    width: "100%",
   },
   alarmText: {
     fontSize: 18,
     marginBottom: 20,
     fontWeight: "bold",
-    color: "red", // Red color for alarm message
+    color: "red",
   },
   selectedTimeText: {
     fontSize: 16,
     marginVertical: 10,
     fontWeight: "bold",
-    textAlign: "center",  // Center the time horizontally
-    marginBottom: 20, // Add margin to give space between text and the button
-    color: "#000", // Black text for normal mode
+    textAlign: "center",
+    marginBottom: 20,
+    color: "#000",
   },
 });
 

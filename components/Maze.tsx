@@ -152,7 +152,6 @@ const Maze: React.FC<MazeProps> = ({ cols, rows, onWin }) => {
   };
   return (
     <View style={styles.container}>
-      <Text style={styles.mazeText}>Maze (Solve to stop alarm):</Text>
       <View style={styles.maze}>
         {maze.map((row, rowIndex) => (
           <View key={rowIndex} style={styles.row}>
@@ -252,12 +251,6 @@ const styles = StyleSheet.create({
   buttonText: {
     color: "white",
     fontSize: 18,
-  },
-  mazeText: {
-    fontSize: 18,
-    marginBottom: 10,
-    fontWeight: "bold",
-    color: "red",
   },
 });
 
