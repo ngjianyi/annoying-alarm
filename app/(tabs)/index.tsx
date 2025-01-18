@@ -1,44 +1,84 @@
-import React, { useState } from "react";
-import { View, Text, Button, TextInput, StyleSheet, Alert } from "react-native";
+import React, { useState, useEffect } from "react";
+import { View, Text, Button, StyleSheet, Alert, Platform } from "react-native";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import { Audio } from "expo-av";
 import Maze from "@/components/Maze";
 import ReactorTask from "@/components/Reactor"; // Import the ReactorTask
 
 const App: React.FC = () => {
   const [alarmSet, setAlarmSet] = useState<boolean>(false);
-  const [task, setTask] = useState<"maze" | "reactor" | null>(null); // State to determine the task
+  const [isMazeVisible, setMazeVisible] = useState<boolean>(false);
   const [sound, setSound] = useState<Audio.Sound | null>(null);
-  const [alarmTime, setAlarmTime] = useState<string>("10");
+  const [selectedTime, setSelectedTime] = useState<Date>(new Date());
+  const [showPicker, setShowPicker] = useState<boolean>(true); // Picker is shown initially
+  const [task, setTask] = useState<"maze" | "reactor" | null>(null); // State to determine the task
 
-  const loadAlarmSound = async (): Promise<void> => {
-    const { sound } = await Audio.Sound.createAsync(
-      require("../../assets/audio/alarm.mp3") 
-    );
-    setSound(sound);
-  };
+  useEffect(() => {
+    const loadAlarmSound = async (): Promise<void> => {
+      const { sound } = await Audio.Sound.createAsync(
+        require("../../assets/audio/alarm.mp3")
+      );
+      setSound(sound);
+    };
 
-  const scheduleAlarm = async (): Promise<void> => {
-    const delay = parseInt(alarmTime, 10);
+    loadAlarmSound();
 
-    if (isNaN(delay) || delay <= 0) {
-      Alert.alert("Invalid Time", "Please enter a valid number of seconds.");
-      return;
+    return () => {
+      if (sound) {
+        sound.unloadAsync();
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    let interval: number;
+
+    if (alarmSet) {
+      interval = (setInterval as unknown as (handler: () => void, timeout: number) => number)(() => {
+        const currentTime = new Date();
+        if (
+          currentTime.getHours() === selectedTime.getHours() &&
+          currentTime.getMinutes() === selectedTime.getMinutes()
+        ) {
+          if (sound) {
+            sound.playAsync();
+          }
+          const selectedTask = Math.random() < 0.5 ? "maze" : "reactor";
+          setTask(selectedTask);
+          setAlarmSet(false); // Reset alarm after playing sound
+          clearInterval(interval);
+        }
+      }, 1000);
     }
 
+    return () => {
+      clearInterval(interval);
+    };
+  }, [alarmSet, selectedTime, sound]);
+
+  const scheduleAlarm = (): void => {
     setAlarmSet(true);
-    setTimeout(() => {
-      loadAlarmSound();
-      sound?.playAsync();
-      const selectedTask = Math.random() < 0.5 ? "maze" : "reactor";
-      setTask(selectedTask);
-    }, delay * 1000);
+    setShowPicker(false);  // Hide the picker after the alarm is set
+    Alert.alert(
+      "Alarm Set",
+      `The alarm is set for ${selectedTime.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      })}.`
+    );
   };
 
   const stopAlarm = (): void => {
     sound?.stopAsync();
     setTask(null);
-    setAlarmSet(false);
+    setMazeVisible(false);
     Alert.alert("Great Job!", "You completed the task and turned off the alarm.");
+  };
+
+  const handleTimeChange = (event: any, selectedDate?: Date) => {
+    if (selectedDate) {
+      setSelectedTime(selectedDate);
+    }
   };
 
   return (
@@ -60,14 +100,24 @@ const App: React.FC = () => {
         </View>
       )}
       {!task && (
-        <View>
-          <TextInput
-            style={styles.input}
-            value={alarmTime}
-            onChangeText={setAlarmTime}
-            keyboardType="numeric"
-            placeholder="Enter alarm time (seconds)"
-          />
+        <View style={styles.innerContainer}>
+          {/* Only show the DateTimePicker if the picker is not hidden */}
+          {showPicker && (
+            <DateTimePicker
+              value={selectedTime}
+              mode="time"
+              is24Hour={true}
+              display={Platform.OS === "ios" ? "spinner" : "default"}
+              onChange={handleTimeChange}
+            />
+          )}
+          <Text style={styles.selectedTimeText}>
+            Selected Time:{" "}
+            {selectedTime.toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            })}
+          </Text>
           <Button
             title={alarmSet ? "Alarm is Set" : "Set Alarm"}
             onPress={scheduleAlarm}
@@ -84,22 +134,26 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#f8f8f8",
+    backgroundColor: "#fff", // Light background
+  },
+  innerContainer: {
+    justifyContent: "center",
+    alignItems: "center", // Center everything horizontally
+    width: "100%", // Ensure the container takes full width
   },
   alarmText: {
     fontSize: 18,
     marginBottom: 20,
     fontWeight: "bold",
-    color: "red",
+    color: "red", // Red color for alarm message
   },
-  input: {
-    width: 200,
-    height: 40,
-    borderColor: "gray",
-    borderWidth: 1,
-    marginBottom: 20,
-    textAlign: "center",
-    fontSize: 18,
+  selectedTimeText: {
+    fontSize: 16,
+    marginVertical: 10,
+    fontWeight: "bold",
+    textAlign: "center",  // Center the time horizontally
+    marginBottom: 20, // Add margin to give space between text and the button
+    color: "#000", // Black text for normal mode
   },
 });
 
