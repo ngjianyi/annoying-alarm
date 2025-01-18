@@ -115,7 +115,7 @@ const App: React.FC = () => {
       {task === "sudoku" && (
         <View>
           <Text style={styles.alarmText}>
-            Complete the memory game to stop the alarm!
+            Complete the sudoku game to stop the alarm!
           </Text>
           <Sudoku onWin={stopAlarm} />
         </View>
