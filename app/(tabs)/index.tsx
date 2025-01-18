@@ -1,10 +1,19 @@
 import React, { useState } from "react";
 import { View, Text, Button, TextInput, StyleSheet, Alert } from "react-native";
+import { Audio } from "expo-av";
+import Maze from "@/components/Maze";
 
 const App: React.FC = () => {
-  const [isAlarmSet, setIsAlarmSet] = useState<boolean>(false);
+  const [alarmSet, setAlarmSet] = useState<boolean>(false);
   const [isMazeVisible, setMazeVisible] = useState<boolean>(false);
+  const [sound, setSound] = useState<Audio.Sound | null>(null);
   const [alarmTime, setAlarmTime] = useState<string>("10");
+  const loadAlarmSound = async (): Promise<void> => {
+    const { sound } = await Audio.Sound.createAsync(
+      require("../assets/audio/alarm.mp3")
+    );
+    setSound(sound);
+  };
 
   const scheduleAlarm = async (): Promise<void> => {
     const delay = parseInt(alarmTime, 10);
@@ -14,10 +23,19 @@ const App: React.FC = () => {
       return;
     }
 
-    setIsAlarmSet(true);
+    setAlarmSet(true);
     setTimeout(() => {
+      loadAlarmSound();
+      sound?.playAsync();
       setMazeVisible(true);
     }, delay * 1000);
+  };
+
+  const stopAlarm = (): void => {
+    sound?.stopAsync();
+    setMazeVisible(false);
+    setAlarmSet(false);
+    Alert.alert("Great Job!", "You solved the maze and turned off the alarm.");
   };
 
   return (
@@ -27,6 +45,7 @@ const App: React.FC = () => {
           <Text style={styles.alarmText}>
             Solve the maze to stop the alarm!
           </Text>
+          <Maze cols={10} rows={10} onWin={stopAlarm} />
         </View>
       ) : (
         <View>
@@ -35,12 +54,12 @@ const App: React.FC = () => {
             value={alarmTime}
             onChangeText={setAlarmTime}
             keyboardType="numeric"
-            placeholder="Enter alarm time in seconds"
+            placeholder="Enter alarm time (seconds)"
           />
           <Button
-            title={isAlarmSet ? "Alarm is Set" : "Set Alarm"}
+            title={alarmSet ? "Alarm is Set" : "Set Alarm"}
             onPress={scheduleAlarm}
-            disabled={isAlarmSet}
+            disabled={alarmSet}
           />
         </View>
       )}
