@@ -29,7 +29,7 @@ const App: React.FC = () => {
     setTimeout(() => {
       loadAlarmSound();
       sound?.playAsync();
-      const selectedTask = Math.random() < 0.5 ? "maze" : "reactor";
+      const selectedTask = Math.random() > 0.999 ? "maze" : "reactor";
       setTask(selectedTask);
     }, delay * 1000);
   };
